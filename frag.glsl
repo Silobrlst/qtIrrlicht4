@@ -1,7 +1,16 @@
-uniform sampler2D qt_Texture0;
-varying highp vec4 qt_TexCoord0;
+#extension GL_OES_standard_derivatives : enable
 
-void main(void)
+precision highp float;
+
+uniform vec3 color;
+
+varying vec3 fPosition;
+varying vec3 fNormal;
+
+void main()
 {
-    gl_FragColor = texture2D(qt_Texture0, qt_TexCoord0.st);
+  vec3 normal = normalize(fNormal);
+  vec3 eye = normalize(-fPosition.xyz);
+  float rim = smoothstep(0.5, 0.8, 1.0 - dot(normal, eye));
+  gl_FragColor = vec4( clamp(rim, 0.0, 1.0) * 1. * color, 1.0 );
 }

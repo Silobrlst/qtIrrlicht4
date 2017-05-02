@@ -13,13 +13,15 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    tinyply.cpp
 
 HEADERS  += mainwindow.h \
     irrlichtwidget.h \
     myeventreceiver.h \
     gizmo.h \
-    irrlichtbullet.h
+    irrlichtwrap.h \
+    tinyply.h
 
 FORMS    += mainwindow.ui
 
@@ -27,10 +29,14 @@ FORMS    += mainwindow.ui
 INCLUDEPATH += /usr/include/irrlicht
 LIBS += -l Irrlicht
 
-unix:!macx: LIBS += -L$$PWD/../../../usr/lib/x86_64-linux-gnu/ -lBulletCollision
-unix:!macx: LIBS += -L$$PWD/../../../usr/lib/x86_64-linux-gnu/ -lBulletDynamics
-unix:!macx: LIBS += -L$$PWD/../../../usr/lib/x86_64-linux-gnu/ -lBulletSoftBody
-unix:!macx: LIBS += -L$$PWD/../../../usr/lib/x86_64-linux-gnu/ -lLinearMath
+unix:!macx: LIBS += -L$$PWD/../Загрузки/reactphysics3d-0.6.0/reactphysics3d/lib/ -lreactphysics3d
 
-INCLUDEPATH += $$PWD/../../../usr/include/bullet
-DEPENDPATH += $$PWD/../../../usr/include/bullet
+INCLUDEPATH += $$PWD/../Загрузки/reactphysics3d-0.6.0/reactphysics3d/src
+DEPENDPATH += $$PWD/../Загрузки/reactphysics3d-0.6.0/reactphysics3d/src
+
+unix:!macx: PRE_TARGETDEPS += $$PWD/../Загрузки/reactphysics3d-0.6.0/reactphysics3d/lib/libreactphysics3d.a
+
+DISTFILES += \
+    frag.glsl \
+    vert.vsh
+
