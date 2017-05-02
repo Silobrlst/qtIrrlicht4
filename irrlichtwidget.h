@@ -8,6 +8,7 @@
 #include <QLineEdit>
 #include <QRegExp>
 #include <qlabel.h>
+#include <QCheckBox>
 
 #include <iostream>
 #include <sstream>
@@ -169,6 +170,8 @@ public:
     QLineEdit *edgeZweightText;
     //</edge panel>--------------------------------
 
+    QCheckBox *moveFromCameraInverse;
+
     QLabel *statusText;
 
     IrrlichtWidget(QWidget *parent){
@@ -178,6 +181,8 @@ public:
         bText = 0;
         sphereNum = 0;
         lineNum = 0;
+        rightMouseButtonDown = false;
+        leftMouseButtonDown = false;
 
         setMouseTracking(true);
 
@@ -194,7 +199,7 @@ public:
         m_device = irr::createDeviceEx(params);
         recv->setDevice(m_device);
         IVideoDriver* driver = m_device->getVideoDriver();
-        ISceneManager *smgr = m_device->getSceneManager();
+        smgr = m_device->getSceneManager();
         smgr->getFileSystem()->changeWorkingDirectoryTo(".");
 
         selectedObj = 0;
@@ -395,14 +400,41 @@ public:
             }
 
             toTextAllParameters(selectedObj);
-        }else{
-            clearAllText();
         }
     }
 
     void unselect(){
-        selectedObj = 0;
-        clearAllText();
+        if(selectedObj != 0){
+            selectedObj = 0;
+            clearAllText();
+        }
+    }
+
+    void moveSphereAroundCamera(Sphere *sphereIn, float distanceIn=30){
+        scene::ISceneManager *smgr = m_device->getSceneManager();
+        scene::ISceneCollisionManager* collMan = smgr->getSceneCollisionManager();
+        vector3df camPos = smgr->getActiveCamera()->getPosition();
+        vector2d<s32> mousePos = m_device->getCursorControl()->getPosition();
+
+        line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
+        vector3df pos = camPos + ray.getVector().normalize()*sphereIn->getScale()*distanceIn;
+
+        if(distanceIn == 0){
+            pos = camPos + ray.getVector().normalize()*camPos.getDistanceFrom(sphereIn->getPosition());
+        }else{
+            pos = camPos + ray.getVector().normalize()*(sphereIn->getScale() + distanceIn);
+        }
+
+        sphereIn->setPosition(pos);
+    }
+
+    bool isSphere(Object *objectIn){
+        if(objectIn != 0){
+            if(objectIn->getType() == ObjectSphere){
+                return true;
+            }
+        }
+        return false;
     }
 
 signals:
@@ -443,10 +475,7 @@ public slots:
             }
 
             if(toolStatus == ToolSphere){
-                line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
-
-                vector3df pos = camPos + ray.getVector().normalize()*sphereRadius*5;
-                sphere->setPosition(pos);
+                moveSphereAroundCamera(sphere);
             }
 
             gizmo->setObject(0);
@@ -458,13 +487,34 @@ public slots:
 
             if(toolStatus == ToolLineTo){
                 line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
-
-                vector3df pos = camPos + ray.getVector().normalize()*sphereRadius*5;
+                vector3df pos = camPos + ray.getVector().normalize()*5;
 
                 SMaterial material;
                 material.EmissiveColor = SColor(255, 255, 255, 255);
                 driver->setMaterial(material);
                 driver->draw3DLine(lineFrom->getPosition(), pos);
+            }
+
+            if(toolStatus == ToolMoveFromCamera && selectedObj != 0){
+                if(selectedObj->getType() == ObjectSphere){
+                    if(rightMouseButtonDown){
+                        Sphere *sph = (Sphere*)selectedObj;
+                        moveSphereAroundCamera(sph, 0);
+                    }else if(leftMouseButtonDown){
+                        Sphere *sph = (Sphere*)selectedObj;
+                        float dist = leftButtonInitmousePos.getDistanceFrom(mousePos);
+
+                        if(moveFromCameraInverse->isChecked()){
+                            dist *= -1;
+                        }
+
+                        vector3df pos = initPos + (initPos - camPos).normalize()*dist;
+
+                        sph->setPosition(pos);
+
+                        driver->draw2DLine(leftButtonInitmousePos, mousePos);
+                    }
+                }
             }
 
             hitedObj = core->getObjectUnderCursor(mousePos);
@@ -508,6 +558,10 @@ public slots:
 
     void moveTool(){
         toolStatus = ToolMove;
+    }
+
+    void moveFromCameraTool(){
+        toolStatus = ToolMoveFromCamera;
     }
 
     void applyX(){
@@ -690,6 +744,12 @@ protected:
 
         switch(event->button()){
         case Qt::LeftButton:
+            leftMouseButtonDown = true;
+            leftButtonInitmousePos = m_device->getCursorControl()->getPosition();
+            if(isSphere(selectedObj)){
+                Sphere *sph = (Sphere*)selectedObj;
+                initPos = sph->getPosition();
+            }
             irrEvent.MouseInput.Event = irr::EMIE_LMOUSE_PRESSED_DOWN;
             break;
 
@@ -698,6 +758,7 @@ protected:
             break;
 
         case Qt::RightButton:
+            rightMouseButtonDown = true;
             irrEvent.MouseInput.Event = irr::EMIE_RMOUSE_PRESSED_DOWN;
             break;
 
@@ -723,18 +784,19 @@ protected:
         switch(event->button()){
         case Qt::LeftButton:
             irrEvent.MouseInput.Event = irr::EMIE_LMOUSE_LEFT_UP;
+            leftMouseButtonDown = false;
 
-            if(!gizmo->grabed || toolStatus == ToolNothing){
-                selectObject(hitedObj);
-
+            if((!gizmo->grabed || toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera && leftMouseButtonDown)){
                 if(hitedObj == 0){
                     unselect();
                 }
+
+                selectObject(hitedObj);
             }
 
             if(toolStatus == ToolSphere){
                 toolStatus = ToolNothing;
-                selectObject(selectedObj);
+                selectObject(sphere);
             }else if(toolStatus == ToolLineFrom && hitedObj != 0){
                 if(hitedObj->getType() == ObjectSphere){
                     toolStatus = ToolLineTo;
@@ -765,6 +827,7 @@ protected:
             break;
 
         case Qt::RightButton:
+            rightMouseButtonDown = false;
             irrEvent.MouseInput.Event = irr::EMIE_RMOUSE_LEFT_UP;
             break;
 
@@ -839,6 +902,10 @@ private:
 
     //toolStatus определяет какой инструмент выбран
     ToolStatus toolStatus;
+    bool leftMouseButtonDown;
+    bool rightMouseButtonDown;
+    vector2d<s32> leftButtonInitmousePos;
+    vector3df initPos;
 
     Sphere *sphere;
     float sphereRadius;
@@ -852,6 +919,7 @@ private:
     Object *hitedObj;
 
     irr::IrrlichtDevice *m_device;
+    ISceneManager *smgr;
     QTimer *m_timer;
 
     PointCloud *pc;

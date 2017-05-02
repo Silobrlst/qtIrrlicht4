@@ -40,6 +40,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->radiusText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyRadius()));
     QObject::connect(ui->applyRadius, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyName()));
     QObject::connect(ui->applyRadius, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyRadius()));
+
+    QObject::connect(ui->moveFromCameraTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(moveFromCameraTool()));
     //</node panel>--------------------------------
 
     //<edge panel>---------------------------------
@@ -81,6 +83,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //</edge panel>--------------------------------
 
     //<left panel>---------------------------------
+    ui->irrlichtWidget->moveFromCameraInverse = ui->moveFromCameraInverse;
+
     QObject::connect(ui->addPoint, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createSphere()));
     QObject::connect(ui->addEdge, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createEdge()));
     QObject::connect(ui->selectTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(selectTool()));
