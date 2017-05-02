@@ -1,0 +1,4 @@
+#ifndef IRRLICHTWRAP_H
+#define IRRLICHTWRAP_H
+
+#endif // IRRLICHTWRAP_H
