@@ -41,7 +41,7 @@
          <x>0</x>
          <y>0</y>
          <width>193</width>
-         <height>639</height>
+         <height>830</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -95,6 +95,83 @@
          </widget>
         </item>
         <item>
+         <widget class="QGroupBox" name="groupBox_8">
+          <property name="title">
+           <string>Random point cloud</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_31">
+             <item>
+              <widget class="QLabel" name="label_29">
+               <property name="text">
+                <string>radius</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="pointCloudRadius">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_32">
+             <item>
+              <widget class="QLabel" name="label_30">
+               <property name="text">
+                <string>points count</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="pointCloudNum">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_33">
+             <item>
+              <widget class="QLabel" name="label_31">
+               <property name="text">
+                <string>point size</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="pointCloudPointSize">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="pointCloudRandomRGB">
+             <property name="text">
+              <string>random RGB</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pointCloudCreate">
+             <property name="text">
+              <string>create</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QGroupBox" name="groupBox_5">
           <property name="title">
            <string>Move from camera Tool</string>
@@ -110,7 +187,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="moveFromCameraSpeed_2">
+              <widget class="QLineEdit" name="moveFromCameraDist">
                <property name="text">
                 <string/>
                </property>
@@ -267,10 +344,17 @@
          <x>0</x>
          <y>0</y>
          <width>184</width>
-         <height>1188</height>
+         <height>1209</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_32">
+          <property name="text">
+           <string>Line</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <layout class="QHBoxLayout" name="nameBox_2">
           <item>
@@ -801,6 +885,13 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
+         <widget class="QLabel" name="label_33">
+          <property name="text">
+           <string>Sphere</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="nameBox">
           <item>
            <widget class="QLabel" name="label_8">
@@ -1015,8 +1106,26 @@
    <property name="nativeMenuBar">
     <bool>false</bool>
    </property>
+   <widget class="QMenu" name="menu_FIle">
+    <property name="title">
+     <string>&amp;FIle</string>
+    </property>
+    <addaction name="actionLoad_data_base"/>
+    <addaction name="actionSave_data"/>
+   </widget>
+   <addaction name="menu_FIle"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionLoad_data_base">
+   <property name="text">
+    <string>open</string>
+   </property>
+  </action>
+  <action name="actionSave_data">
+   <property name="text">
+    <string>save</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QObject::connect(ui->actionSave_data, SIGNAL(triggered()), ui->irrlichtWidget, SLOT(saveData()));
+
     //<node panel>---------------------------------
     ui->irrlichtWidget->nameText = ui->nameText;
     ui->irrlichtWidget->radiusText = ui->radiusText;
@@ -84,11 +86,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //<left panel>---------------------------------
     ui->irrlichtWidget->moveFromCameraInverse = ui->moveFromCameraInverse;
+    ui->irrlichtWidget->moveFromCameraDist = ui->moveFromCameraDist;
+
+    ui->irrlichtWidget->pointCloudRadius = ui->pointCloudRadius;
+    ui->irrlichtWidget->pointCloudNum = ui->pointCloudNum;
+    ui->irrlichtWidget->pointCloudRandomRGB = ui->pointCloudRandomRGB;
+    ui->irrlichtWidget->pointCloudPointSize = ui->pointCloudPointSize;
 
     QObject::connect(ui->addPoint, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createSphere()));
     QObject::connect(ui->addEdge, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createEdge()));
     QObject::connect(ui->selectTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(selectTool()));
     QObject::connect(ui->moveTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(moveTool()));
+
+    QObject::connect(ui->pointCloudCreate, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createPointCloud()));
+
+    QObject::connect(ui->moveFromCameraDist, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyFromCameraDist()));
 
     QStringListModel *model = new QStringListModel();
     QStringList List;

@@ -142,6 +142,8 @@ public:
     }
 
     void render(){
+        glEnable(GL_LIGHTING); //если свет отлючить то вся гизма при пертаскивании становится белой
+
         update();
 
         if(object != 0){
@@ -219,7 +221,3 @@ public:
     }
 };
 
-
-class MoveTool{
-
-};

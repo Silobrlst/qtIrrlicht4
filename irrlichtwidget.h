@@ -14,9 +14,9 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <ctime>
 
 #include <irrlicht.h>
-#include "tinyply.h"
 
 #include <gizmo.h>
 #include "myeventreceiver.h"
@@ -29,13 +29,11 @@ using namespace scene;
 using namespace core;
 using namespace gui;
 
-using namespace tinyply;
-
-
 enum ToolStatus{
     ToolNothing,
     ToolMove,
     ToolSphere,
+    ToolPointCloud,
     ToolLineFrom,
     ToolLineTo,
     ToolMoveFromCamera
@@ -53,69 +51,6 @@ public:
         worldViewProj *= driver->getTransform(video::ETS_VIEW);
         worldViewProj *= driver->getTransform(video::ETS_WORLD);
         services->setVertexShaderConstant("_mvProj", worldViewProj.pointer(), 16);
-    }
-};
-
-class PointCloud: public TransformableObject{
-    std::vector<float> verts;
-    std::vector<float> norms;
-    std::vector<uint8_t> colors;
-
-    std::vector<uint32_t> faces;
-    std::vector<float> uvCoords;
-
-    uint32_t vertexCount;
-
-    float pointSize;
-
-public:
-    PointCloud(ISceneManager *smgrIn, const std::string & fileNameIn): TransformableObject(smgrIn, ObjectPointCloud){
-        pointSize = 1.;
-
-        // Read the file and create a std::istringstream suitable
-        // for the lib -- tinyply does not perform any file i/o.
-        std::ifstream ss(fileNameIn, std::ios::binary);
-        PlyFile file(ss);
-
-        vertexCount = file.request_properties_from_element("vertex", { "x", "y", "z" }, verts);
-        file.request_properties_from_element("vertex", { "nx", "ny", "nz" }, norms);
-        file.request_properties_from_element("vertex", { "red", "green", "blue", "alpha" }, colors);
-        file.request_properties_from_element("face", { "vertex_indices" }, faces, 3);
-        file.request_properties_from_element("face", { "texcoord" }, uvCoords, 6);
-
-        file.read(ss);
-    }
-
-    void render(bool useColorId=false, SColor colorIdIn=SColor(255, 0, 0, 0)){
-        IVideoDriver *driver = smgr->getVideoDriver();
-        driver->setTransform(ETS_WORLD, transform);
-
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_LIGHTING);
-
-        glPointSize(pointSize);
-        glBegin(GL_POINTS);
-
-        for(int i=0; i<vertexCount; i++){
-            u32 vertexIndex = i*3;
-            u32 colorIndex = i*4;
-            float x = verts[vertexIndex];
-            float y = verts[vertexIndex+1];
-            float z = verts[vertexIndex+2];
-            float r = colors[colorIndex];
-            float g = colors[colorIndex+1];
-            float b = colors[colorIndex+2];
-            float a = colors[colorIndex+3];
-
-            glColor4ub(r, g, b, a);
-            glVertex3f(x, y, z);
-        }
-        glEnd();
-    }
-
-    void setPointSize(float pointSizeIn){
-        pointSize = pointSizeIn;
     }
 };
 
@@ -170,11 +105,21 @@ public:
     QLineEdit *edgeZweightText;
     //</edge panel>--------------------------------
 
+    QLineEdit *moveFromCameraDist;
     QCheckBox *moveFromCameraInverse;
+
+    QLineEdit *pointCloudRadius;
+    QLineEdit *pointCloudNum;
+    QLineEdit *pointCloudPointSize;
+    QCheckBox *pointCloudRandomRGB;
 
     QLabel *statusText;
 
+    const QString dataFileName = "data.json";
+
     IrrlichtWidget(QWidget *parent){
+        srand( time( 0 ) );
+
         toolStatus = ToolNothing;
         rText = 0;
         gText = 0;
@@ -206,6 +151,7 @@ public:
         hitedObj = 0;
 
         core = new Core(smgr);
+        core->fromJSONfile(dataFileName);
         core->setAllLinesWidth(10.);
 
         gizmo = new Gizmo(smgr);
@@ -410,27 +356,36 @@ public:
         }
     }
 
-    void moveSphereAroundCamera(Sphere *sphereIn, float distanceIn=30){
+    void moveSphereAroundCamera(TransformableObject *objectIn, float distanceIn=30){
         scene::ISceneManager *smgr = m_device->getSceneManager();
         scene::ISceneCollisionManager* collMan = smgr->getSceneCollisionManager();
         vector3df camPos = smgr->getActiveCamera()->getPosition();
         vector2d<s32> mousePos = m_device->getCursorControl()->getPosition();
 
         line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
-        vector3df pos = camPos + ray.getVector().normalize()*sphereIn->getScale()*distanceIn;
+        vector3df pos = camPos + ray.getVector().normalize()*objectIn->getScale()*distanceIn;
 
         if(distanceIn == 0){
-            pos = camPos + ray.getVector().normalize()*camPos.getDistanceFrom(sphereIn->getPosition());
+            pos = camPos + ray.getVector().normalize()*camPos.getDistanceFrom(objectIn->getPosition());
         }else{
-            pos = camPos + ray.getVector().normalize()*(sphereIn->getScale() + distanceIn);
+            pos = camPos + ray.getVector().normalize()*(objectIn->getScale() + distanceIn);
         }
 
-        sphereIn->setPosition(pos);
+        objectIn->setPosition(pos);
     }
 
     bool isSphere(Object *objectIn){
         if(objectIn != 0){
             if(objectIn->getType() == ObjectSphere){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool isLIne(Object *objectIn){
+        if(objectIn != 0){
+            if(objectIn->getType() == ObjectLine){
                 return true;
             }
         }
@@ -479,10 +434,8 @@ public slots:
             }
 
             gizmo->setObject(0);
-            if(toolStatus == ToolMove && selectedObj != 0){
-                if(selectedObj->getType() == ObjectSphere){
-                    gizmo->setObject((Sphere*)selectedObj);
-                }
+            if(toolStatus == ToolMove && !isLIne(selectedObj)){
+                gizmo->setObject((TransformableObject*)selectedObj);
             }
 
             if(toolStatus == ToolLineTo){
@@ -495,25 +448,26 @@ public slots:
                 driver->draw3DLine(lineFrom->getPosition(), pos);
             }
 
-            if(toolStatus == ToolMoveFromCamera && selectedObj != 0){
-                if(selectedObj->getType() == ObjectSphere){
-                    if(rightMouseButtonDown){
-                        Sphere *sph = (Sphere*)selectedObj;
-                        moveSphereAroundCamera(sph, 0);
-                    }else if(leftMouseButtonDown){
-                        Sphere *sph = (Sphere*)selectedObj;
-                        float dist = leftButtonInitmousePos.getDistanceFrom(mousePos);
+            if(toolStatus == ToolMoveFromCamera && !isLIne(selectedObj)){
+                if(rightMouseButtonDown){
+                    TransformableObject *obj = (TransformableObject*)selectedObj;
+                    moveSphereAroundCamera(obj, 0);
+                }
+                if(leftMouseButtonDown){
+                    TransformableObject *obj = (TransformableObject*)selectedObj;
+                    float dist = leftButtonInitmousePos.getDistanceFrom(mousePos);
 
-                        if(moveFromCameraInverse->isChecked()){
-                            dist *= -1;
-                        }
-
-                        vector3df pos = initPos + (initPos - camPos).normalize()*dist;
-
-                        sph->setPosition(pos);
-
-                        driver->draw2DLine(leftButtonInitmousePos, mousePos);
+                    if(moveFromCameraInverse->isChecked()){
+                        dist *= -1;
                     }
+
+                    vector3df pos = initPos + (initPos - camPos).normalize()*dist;
+
+                    obj->setPosition(pos);
+
+                    moveFromCameraDist->setText(QString::number(camPos.getDistanceFrom(pos)));
+
+                    driver->draw2DLine(leftButtonInitmousePos, mousePos);
                 }
             }
 
@@ -552,6 +506,31 @@ public slots:
         selectedObj = 0;
     }
 
+    void createPointCloud(){
+        if(checkInteger(pointCloudNum->text()) && checkFloat(pointCloudRadius->text())){
+            float radius = pointCloudRadius->text().toFloat();
+            int num = pointCloudNum->text().toInt();
+
+            float size = 1.;
+            if(checkFloat(pointCloudPointSize->text())){
+                size = pointCloudPointSize->text().toFloat();
+            }
+
+            pointCloud = core->addPointCloud();
+            pointCloud->setPointSize(size);
+
+//            if(pointCloudRandomRGB->isChecked()){
+//                for(int i=0; i<num; i++){
+//                    pointCloud->addPoint(radius);
+//                }
+//            }
+
+            for(int i=0; i<num; i++){
+                pointCloud->addPoint(radius);
+            }
+        }
+    }
+
     void selectTool(){
         toolStatus = ToolNothing;
     }
@@ -562,6 +541,15 @@ public slots:
 
     void moveFromCameraTool(){
         toolStatus = ToolMoveFromCamera;
+    }
+
+    void applyFromCameraDist(){
+        vector3df camPos = smgr->getActiveCamera()->getPosition();
+        Sphere *sph = (Sphere*)selectedObj;
+        float dist = moveFromCameraDist->text().toFloat();
+        vector3df pos = camPos + (sph->getPosition() - camPos).normalize()*dist;
+
+        sph->setPosition(pos);
     }
 
     void applyX(){
@@ -636,6 +624,10 @@ public slots:
                 sph->setScale(r);
             }
         }
+    }
+
+    void saveData(){
+        core->toJSONfile(dataFileName);
     }
 
 protected:
@@ -786,7 +778,7 @@ protected:
             irrEvent.MouseInput.Event = irr::EMIE_LMOUSE_LEFT_UP;
             leftMouseButtonDown = false;
 
-            if((!gizmo->grabed || toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera && leftMouseButtonDown)){
+            if((!gizmo->grabed || toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera)){
                 if(hitedObj == 0){
                     unselect();
                 }
@@ -910,6 +902,8 @@ private:
     Sphere *sphere;
     float sphereRadius;
     int sphereNum;
+
+    PointCloud *pointCloud;
 
     Line *line;
     Sphere *lineFrom;

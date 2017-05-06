@@ -21,7 +21,8 @@ HEADERS  += mainwindow.h \
     myeventreceiver.h \
     gizmo.h \
     irrlichtwrap.h \
-    tinyply.h
+    tinyply.h \
+    object.h
 
 FORMS    += mainwindow.ui
 
