@@ -12,8 +12,11 @@
 
 #include <irrlicht.h>
 #include "tinyply.h"
+#include "nanoflann.hpp"
 
 using namespace std;
+using namespace nanoflann;
+using namespace tinyply;
 
 using namespace irr;
 using namespace video;
@@ -21,7 +24,6 @@ using namespace scene;
 using namespace core;
 using namespace gui;
 
-using namespace tinyply;
 
 enum ObjectType{
     ObjectSphere,
@@ -31,6 +33,7 @@ enum ObjectType{
     ObjectPlane,
     ObjectPointCloud
 };
+
 
 class Object{
 protected:
@@ -696,7 +699,62 @@ public:
             fromJSONvertex(vertices[i].toObject());
         }
     }
+
+
+    inline size_t kdtree_get_point_count() const { return vertexCount; }
+
+    inline float kdtree_distance(const float *p1, const size_t idx_p2, size_t /*size*/) const
+    {
+        u32 vertexIndex = idx_p2*3;
+        float x = verts[vertexIndex];
+        float y = verts[vertexIndex+1];
+        float z = verts[vertexIndex+2];
+
+        const float d0=p1[0]-x;
+        const float d1=p1[1]-y;
+        const float d2=p1[2]-z;
+        return sqrt(d0*d0+d1*d1+d2*d2);
+    }
+
+    inline float kdtree_get_pt(const size_t idx, int dim) const
+    {
+        u32 vertexIndex = idx*3;
+        float x = verts[vertexIndex];
+        float y = verts[vertexIndex+1];
+        float z = verts[vertexIndex+2];
+
+        if (dim==0) return x;
+        else if (dim==1) return y;
+        else return z;
+    }
+
+    template <class BBOX> bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+
+
+    int checkWithSphere(vector3df positionIn, float radiusIn){
+        // construct a kd-tree index:
+        typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, PointCloud>, PointCloud, 3> my_kd_tree_t;
+        my_kd_tree_t index(3, *this, KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
+        index.buildIndex();
+
+        const float queryPos[3] = {positionIn.X, positionIn.Y, positionIn.Z};
+
+        const float search_radius = static_cast<float>(radiusIn);
+        std::vector<std::pair<size_t,float>> ret_matches;
+
+        nanoflann::SearchParams params;
+
+        const size_t nMatches = index.radiusSearch(&queryPos[0],search_radius, ret_matches, params);
+
+//        cout << "radiusSearch(): radius=" << search_radius << " -> " << nMatches << " matches\n";
+//        for (size_t i=0;i<nMatches;i++)
+//            cout << "idx["<< i << "]=" << ret_matches[i].first << " dist["<< i << "]=" << ret_matches[i].second << endl;
+//        cout << "\n";
+
+        return nMatches;
+    }
 };
+
 
 class Core{
 private:
@@ -780,6 +838,8 @@ private:
     void pointCloudFromJSON(QJsonObject jsonIn){
         PointCloud *pc = addPointCloud();
         pc->fromJSON(jsonIn);
+
+        qInfo()<<pc->checkWithSphere(vector3df(0, 0, 0), 10);
     }
 
 public:

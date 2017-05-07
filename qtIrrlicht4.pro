@@ -22,7 +22,8 @@ HEADERS  += mainwindow.h \
     gizmo.h \
     irrlichtwrap.h \
     tinyply.h \
-    object.h
+    object.h \
+    nanoflann.hpp
 
 FORMS    += mainwindow.ui
 
