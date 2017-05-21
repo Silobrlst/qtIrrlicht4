@@ -14,7 +14,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    tinyply.cpp
+    tinyply.cpp \
+    GizmoTransformMove.cpp \
+    GizmoTransformRender.cpp \
+    GizmoTransformRotate.cpp \
+    GizmoTransformScale.cpp \
+    test.cpp \
+    ZBaseMaths.cpp \
+    ZBaseMaths.inl \
+    ZMathsFunc.cpp
 
 HEADERS  += mainwindow.h \
     irrlichtwidget.h \
@@ -23,7 +31,19 @@ HEADERS  += mainwindow.h \
     irrlichtwrap.h \
     tinyply.h \
     object.h \
-    nanoflann.hpp
+    nanoflann.hpp \
+    GizmoTransform.h \
+    GizmoTransformMove.h \
+    GizmoTransformRender.h \
+    GizmoTransformRotate.h \
+    GizmoTransformScale.h \
+    IGizmo.h \
+    LibBase.h \
+    test.h \
+    ZBaseDefs.h \
+    ZBaseMaths.h \
+    ZCollisionsUtils.h \
+    ZMathsFunc.h
 
 FORMS    += mainwindow.ui
 
@@ -40,5 +60,7 @@ unix:!macx: PRE_TARGETDEPS += $$PWD/../Загрузки/reactphysics3d-0.6.0/rea
 
 DISTFILES += \
     frag.glsl \
-    vert.vsh
+    vert.vsh \
+    qtIrrlicht4.pro.user \
+    README.md
 
