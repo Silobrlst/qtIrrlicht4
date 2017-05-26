@@ -1,6 +1,6 @@
-#include "test.h"
+//#include "test.h"
 
-test::test(QWidget *parent) : QWidget(parent)
-{
+//test::test(QWidget *parent) : QWidget(parent)
+//{
 
-}
+//}

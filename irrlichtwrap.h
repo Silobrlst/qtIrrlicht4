@@ -195,6 +195,10 @@ public:
     void setScale(float scaleIn){
         transform.setScale(scaleIn);
     }
+
+    matrix4 *getMatrix(){
+        return &transform;
+    }
 };
 
 class Arrow: public TransformableObject{

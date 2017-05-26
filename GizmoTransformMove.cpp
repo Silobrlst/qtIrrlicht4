@@ -27,7 +27,6 @@
 // 
 
 
-#include "stdafx.h"
 #include "GizmoTransformMove.h"
 #ifdef MAC_OS
 #import <OpenGL/OpenGL.h>

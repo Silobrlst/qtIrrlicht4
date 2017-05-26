@@ -75,7 +75,7 @@
            <item>
             <widget class="QPushButton" name="moveTool">
              <property name="text">
-              <string>Move tool</string>
+              <string/>
              </property>
             </widget>
            </item>

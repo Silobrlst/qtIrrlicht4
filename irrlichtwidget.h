@@ -18,6 +18,7 @@
 
 #include <irrlicht.h>
 
+#include "IGizmo.h"
 #include <gizmo.h>
 #include "myeventreceiver.h"
 
@@ -154,8 +155,6 @@ public:
         core->fromJSONfile(dataFileName);
         core->setAllLinesWidth(10.);
 
-        gizmo = new Gizmo(smgr);
-
         ICameraSceneNode *cam = smgr->addCameraSceneNodeFPS();
         cam->setInputReceiverEnabled(false);
         cam->setTarget(vector3df(0, 0, 0));
@@ -166,6 +165,18 @@ public:
         //        MyShaderCallBack* mc = new MyShaderCallBack();
         //        materialType = gpu->addHighLevelShaderMaterialFromFiles(vsFileName.c_str(), "main", video::EVST_VS_1_1, psFileName.c_str(), "main", video::EPST_PS_1_1, mc);
         //        mc->drop();
+
+        gizmoMove = CreateMoveGizmo();
+        gizmoRotate = CreateRotateGizmo();
+        gizmoScale = CreateScaleGizmo();
+
+        gizmo = gizmoMove;
+        gizmo->SetLocation( IGizmo::LOCATE_WORLD );
+
+        gizmo->SetScreenDimension( 640, 480 );
+        gizmoMove->SetDisplayScale( 2.f );
+        gizmoRotate->SetDisplayScale( 2.f );
+        gizmoScale->SetDisplayScale( 2.f );
 
 
         m_timer = new QTimer;
@@ -402,7 +413,8 @@ public slots:
             video::IVideoDriver *driver = m_device->getVideoDriver();
             scene::ISceneManager *smgr = m_device->getSceneManager();
             scene::ISceneCollisionManager* collMan = smgr->getSceneCollisionManager();
-            vector3df camPos = smgr->getActiveCamera()->getPosition();
+            ICameraSceneNode *cam = smgr->getActiveCamera();
+            vector3df camPos = cam->getPosition();
             vector2d<s32> mousePos = m_device->getCursorControl()->getPosition();
 
             driver->beginScene(true, true, video::SColor(255,50,50,100));
@@ -425,18 +437,15 @@ public slots:
                 selectedObj->setSelected(true);
             }
 
-            if(gizmo->grabed && selectedObj != 0){
-                toTextAllParameters(selectedObj);
-            }
+            //            if(gizmo->grabed && selectedObj != 0){
+            //                toTextAllParameters(selectedObj);
+            //            }
 
             if(toolStatus == ToolSphere){
                 moveSphereAroundCamera(sphere);
             }
 
-            gizmo->setObject(0);
-            if(toolStatus == ToolMove && !isLIne(selectedObj)){
-                gizmo->setObject((TransformableObject*)selectedObj);
-            }
+
 
             if(toolStatus == ToolLineTo){
                 line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
@@ -477,8 +486,14 @@ public slots:
             core->renderAll();
             smgr->drawAll();
 
-            driver->clearZBuffer();
-            gizmo->render();
+            gizmo->SetCameraMatrix( cam->getViewMatrix().pointer(), cam->getProjectionMatrix().pointer() );
+
+            //            gizmo->setObject(0);
+            if(toolStatus == ToolMove && !isLIne(selectedObj) && selectedObj != 0){
+                //gizmo->setObject((TransformableObject*)selectedObj);
+                gizmo->SetEditMatrix( ((TransformableObject*)selectedObj)->getMatrix()->pointer() );
+                gizmo->Draw();
+            }
 
             driver->endScene();
         }
@@ -519,11 +534,11 @@ public slots:
             pointCloud = core->addPointCloud();
             pointCloud->setPointSize(size);
 
-//            if(pointCloudRandomRGB->isChecked()){
-//                for(int i=0; i<num; i++){
-//                    pointCloud->addPoint(radius);
-//                }
-//            }
+            //            if(pointCloudRandomRGB->isChecked()){
+            //                for(int i=0; i<num; i++){
+            //                    pointCloud->addPoint(radius);
+            //                }
+            //            }
 
             for(int i=0; i<num; i++){
                 pointCloud->addPoint(radius);
@@ -736,6 +751,8 @@ protected:
 
         switch(event->button()){
         case Qt::LeftButton:
+            gizmo->OnMouseDown( 640-event->pos().x(), 480-event->pos().y());
+
             leftMouseButtonDown = true;
             leftButtonInitmousePos = m_device->getCursorControl()->getPosition();
             if(isSphere(selectedObj)){
@@ -764,8 +781,6 @@ protected:
 
         m_device->postEventFromUser(irrEvent);
         event->ignore();
-
-        gizmo->mouseLeftButtonPressEvent();
     }
 
     void mouseReleaseEvent(QMouseEvent* event){
@@ -775,10 +790,20 @@ protected:
 
         switch(event->button()){
         case Qt::LeftButton:
+            gizmo->OnMouseUp( 640-event->pos().x(), 480-event->pos().y() );
+
             irrEvent.MouseInput.Event = irr::EMIE_LMOUSE_LEFT_UP;
             leftMouseButtonDown = false;
 
-            if((!gizmo->grabed || toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera)){
+            //            if((!gizmo->grabed || toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera)){
+            //                if(hitedObj == 0){
+            //                    unselect();
+            //                }
+
+            //                selectObject(hitedObj);
+            //            }
+
+            if((toolStatus == ToolNothing) && !(toolStatus == ToolMoveFromCamera)){
                 if(hitedObj == 0){
                     unselect();
                 }
@@ -810,7 +835,7 @@ protected:
                 }
             }
 
-            gizmo->mouseLeftButtonReleaseEvent();
+            //gizmo->mouseLeftButtonReleaseEvent();
 
             break;
 
@@ -855,7 +880,8 @@ protected:
         irr::SEvent irrEvent;
         irrEvent.EventType = irr::EET_MOUSE_INPUT_EVENT;
         if ( m_device != 0 ){
-            gizmo->mouseMoveEvent(vector2d<s32>(event->x(), event->y()));
+            gizmo->OnMouseMove( 640-event->x(), 480-event->y() );
+            //gizmo->mouseMoveEvent(vector2d<s32>(event->x(), event->y()));
             irrEvent.MouseInput.Event = irr::EMIE_MOUSE_MOVED;
             irrEvent.MouseInput.X = event->x();
             irrEvent.MouseInput.Y = event->y();
@@ -888,8 +914,6 @@ private:
 
     Core *core;
 
-    Gizmo *gizmo;
-
     s32 shaderType;
 
     //toolStatus определяет какой инструмент выбран
@@ -917,6 +941,11 @@ private:
     QTimer *m_timer;
 
     PointCloud *pc;
+
+    IGizmo *gizmo;
+    IGizmo *gizmoMove, *gizmoRotate, *gizmoScale;
+    matrix4 viewInv;
+    matrix4 projInv;
 };
 
 #endif // WIDGET_H

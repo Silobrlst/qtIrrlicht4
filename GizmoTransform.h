@@ -115,10 +115,10 @@ public:
 		m_Proj = *(tmatrix*)Proj;
 
 		m_invmodel=m_Model;
-		m_invmodel.Inverse();
+        m_invmodel.Inverse();
 
 		m_invproj=m_Proj;
-		m_invproj.Inverse();
+        m_invproj.Inverse();
 
         m_CamSrc = m_invmodel.V4.position;
         m_CamDir = m_invmodel.V4.dir;
@@ -152,9 +152,9 @@ public:
 	{
 		switch (vtID)
 		{
-		case 0: return tvector3(1,0,0);
-		case 1: return tvector3(0,1,0);
-		case 2: return tvector3(0,0,1);
+        case 0: return tvector3(1,0,0);
+        case 1: return tvector3(0,1,0);
+        case 2: return tvector3(0,0,1);
 		}
 		return tvector3(0,0,0);
 	}
@@ -164,9 +164,9 @@ public:
 		tvector3 vt;
 		switch (vtID)
 		{
-		case 0: vt = tvector3(1,0,0); break;
-		case 1: vt = tvector3(0,1,0); break;
-		case 2: vt = tvector3(0,0,1); break;
+        case 0: vt = tvector3(1,0,0); break;
+        case 1: vt = tvector3(0,1,0); break;
+        case 2: vt = tvector3(0,0,1); break;
 		}
         if (mLocation == LOCATE_LOCAL)
         {
