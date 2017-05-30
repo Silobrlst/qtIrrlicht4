@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <qstringlistmodel.h>
 #include <QListWidgetItem>
+#include <qstandarditemmodel.h>
+#include "attributetreedelegate.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,113 +13,68 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(ui->actionSave_data, SIGNAL(triggered()), ui->irrlichtWidget, SLOT(saveData()));
 
-    //<node panel>---------------------------------
-    ui->irrlichtWidget->nameText = ui->nameText;
-    ui->irrlichtWidget->radiusText = ui->radiusText;
+    QObject::connect(ui->selectTool, SIGNAL(clicked()), this, SLOT(setSelectTool()));
+    QObject::connect(ui->moveTool, SIGNAL(clicked()), this, SLOT(setMoveTool()));
+    QObject::connect(ui->rotateTool, SIGNAL(clicked()), this, SLOT(setRotateTool()));
+    QObject::connect(ui->scaleTool, SIGNAL(clicked()), this, SLOT(setScaleTool()));
 
-    ui->irrlichtWidget->xText = ui->xText;
-    ui->irrlichtWidget->yText = ui->yText;
-    ui->irrlichtWidget->zText = ui->zText;
-
-    ui->irrlichtWidget->rText = ui->rText;
-    ui->irrlichtWidget->gText = ui->gText;
-    ui->irrlichtWidget->bText = ui->bText;
-    ui->irrlichtWidget->nodeRGBWeightText = ui->nodeRGBWeightText;
-
-    QObject::connect(ui->xText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyX()));
-    QObject::connect(ui->yText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyY()));
-    QObject::connect(ui->zText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyZ()));
-    QObject::connect(ui->applyXYZ, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyX()));
-    QObject::connect(ui->applyXYZ, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyY()));
-    QObject::connect(ui->applyXYZ, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyZ()));
-
-    QObject::connect(ui->rText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyR()));
-    QObject::connect(ui->gText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyG()));
-    QObject::connect(ui->bText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyB()));
-    QObject::connect(ui->applyRGB, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyR()));
-    QObject::connect(ui->applyRGB, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyG()));
-    QObject::connect(ui->applyRGB, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyB()));
-
-    QObject::connect(ui->nameText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyName()));
-    QObject::connect(ui->radiusText, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyRadius()));
-    QObject::connect(ui->applyRadius, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyName()));
-    QObject::connect(ui->applyRadius, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(applyRadius()));
-
-    QObject::connect(ui->moveFromCameraTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(moveFromCameraTool()));
-    //</node panel>--------------------------------
-
-    //<edge panel>---------------------------------
-    ui->irrlichtWidget->edgeNameText = ui->edgeNameText;
-
-    ui->irrlichtWidget->edgeRtext = ui->edgeRtext;
-    ui->irrlichtWidget->edgeGtext = ui->edgeGtext;
-    ui->irrlichtWidget->edgeBtext = ui->edgeBtext;
-
-    ui->irrlichtWidget->edgeDistText = ui->edgeDistText;
-    ui->irrlichtWidget->edgeDistMaxText = ui->edgeDistMaxText;
-    ui->irrlichtWidget->edgeDistMinText = ui->edgeDistMinText;
-    ui->irrlichtWidget->edgeDistWeightText = ui->edgeDistWeightText;
-
-    ui->irrlichtWidget->edgeRGBdiffText = ui->edgeRGBdiffText;
-    ui->irrlichtWidget->edgeRGBdiffMaxText = ui->edgeRGBdiffMaxText;
-    ui->irrlichtWidget->edgeRGBdiffMinText = ui->edgeRGBdiffMinText;
-    ui->irrlichtWidget->edgeRGBdiffWeightText = ui->edgeRGBdiffWeightText;
-
-    ui->irrlichtWidget->edgeXdiffText = ui->edgeXdiffText;
-    ui->irrlichtWidget->edgeXmaxText = ui->edgeXmaxText;
-    ui->irrlichtWidget->edgeXminText = ui->edgeXminText;
-    ui->irrlichtWidget->edgeXweightText = ui->edgeXweightText;
-
-    ui->irrlichtWidget->edgeYdiffText = ui->edgeYdiffText;
-    ui->irrlichtWidget->edgeYmaxText = ui->edgeYmaxText;
-    ui->irrlichtWidget->edgeYminText = ui->edgeYminText;
-    ui->irrlichtWidget->edgeYweightText = ui->edgeYweightText;
-
-    ui->irrlichtWidget->edgeZdiffText = ui->edgeZdiffText;
-    ui->irrlichtWidget->edgeZmaxText = ui->edgeZmaxText;
-    ui->irrlichtWidget->edgeZminText = ui->edgeZminText;
-    ui->irrlichtWidget->edgeZweightText = ui->edgeZweightText;
-
-    QObject::connect(ui->irrlichtWidget, SIGNAL(setNodePanelVisible(bool)), ui->rightPanelnode, SLOT(setVisible(bool)));
-    QObject::connect(ui->irrlichtWidget, SIGNAL(setEdgePanelVisible(bool)), ui->rightPanelEdge, SLOT(setVisible(bool)));
-
-    ui->rightPanelEdge->setVisible(false);
-    //</edge panel>--------------------------------
+    ui->selectTool->click();
 
     //<left panel>---------------------------------
     ui->irrlichtWidget->moveFromCameraInverse = ui->moveFromCameraInverse;
     ui->irrlichtWidget->moveFromCameraDist = ui->moveFromCameraDist;
 
-    ui->irrlichtWidget->pointCloudRadius = ui->pointCloudRadius;
-    ui->irrlichtWidget->pointCloudNum = ui->pointCloudNum;
-    ui->irrlichtWidget->pointCloudRandomRGB = ui->pointCloudRandomRGB;
-    ui->irrlichtWidget->pointCloudPointSize = ui->pointCloudPointSize;
-
-    QObject::connect(ui->addPoint, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createSphere()));
-    QObject::connect(ui->addEdge, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createEdge()));
     QObject::connect(ui->selectTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(selectTool()));
     QObject::connect(ui->moveTool, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(moveTool()));
 
-    QObject::connect(ui->pointCloudCreate, SIGNAL(clicked()), ui->irrlichtWidget, SLOT(createPointCloud()));
-
     QObject::connect(ui->moveFromCameraDist, SIGNAL(returnPressed()), ui->irrlichtWidget, SLOT(applyFromCameraDist()));
-
-    QStringListModel *model = new QStringListModel();
-    QStringList List;
-    List << "Clair de Lune" << "Reverie" << "Prelude";
-    model->setStringList(List);
-
-    ui->nodeList->setModel(model);
     //</left panel>--------------------------------
 
-    QStringList tableHeader;
-    tableHeader<<"from node"<<"edge" << "to node";
-    ui->connectionsTable->setHorizontalHeaderLabels(tableHeader);
+    QStandardItemModel *model = new QStandardItemModel();
+    model->setItem(0, 0, new QStandardItem("qweqweqwe ryytrey"));
+
+    QStandardItem *item = new QStandardItem();
+    item->setData("zxczxc", Qt::DisplayRole);
+    model->setItem(0, 1, item);
+
+    ui->treeView->setModel(model);
+    ui->treeView->setItemDelegate(new AttributeTreeDelegate());
 
     QLabel *statusLabel = new QLabel();
     ui->statusBar->addWidget(new QLabel("status: "));
     ui->statusBar->addWidget(statusLabel);
 }
+
+void MainWindow::resetToolButtons(){
+    ui->selectTool->setChecked(false);
+    ui->moveTool->setChecked(false);
+    ui->rotateTool->setChecked(false);
+    ui->scaleTool->setChecked(false);
+}
+
+void MainWindow::setSelectTool(){
+    resetToolButtons();
+    ui->selectTool->setChecked(true);
+}
+
+void MainWindow::setMoveTool(){
+    resetToolButtons();
+    ui->moveTool->setChecked(true);
+}
+
+void MainWindow::setRotateTool(){
+    resetToolButtons();
+    ui->rotateTool->setChecked(true);
+}
+
+void MainWindow::setScaleTool(){
+    resetToolButtons();
+    ui->scaleTool->setChecked(true);
+}
+
+void MainWindow::setXYZvisible(bool visibleIn){
+}
+
 
 MainWindow::~MainWindow()
 {

@@ -21,9 +21,18 @@ public:
         app = appIn;
     }
 
+public slots:
+    void setSelectTool();
+    void setMoveTool();
+    void setRotateTool();
+    void setScaleTool();
+
+    void setXYZvisible(bool visibleIn);
 
 private:
     Ui::MainWindow *ui;
+
+    void resetToolButtons();
 };
 
 #endif // MAINWINDOW_H

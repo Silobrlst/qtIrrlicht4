@@ -9,6 +9,7 @@
 #include <QRegExp>
 #include <qlabel.h>
 #include <QCheckBox>
+#include <QTreeWidgetItem>
 
 #include <iostream>
 #include <sstream>
@@ -19,8 +20,10 @@
 #include <irrlicht.h>
 
 #include "IGizmo.h"
-#include <gizmo.h>
 #include "myeventreceiver.h"
+
+#include <irrlicht.h>
+#include <irrlichtwrap.h>
 
 using namespace std;
 
@@ -59,60 +62,8 @@ class IrrlichtWidget : public QWidget{
     Q_OBJECT
 
 public:
-    //<node panel>---------------------------------
-    QLineEdit *xText;
-    QLineEdit *yText;
-    QLineEdit *zText;
-
-    QLineEdit *rText;
-    QLineEdit *gText;
-    QLineEdit *bText;
-    QLineEdit *nodeRGBWeightText;
-
-    QLineEdit *nameText;
-    QLineEdit *radiusText;
-    //</node panel>--------------------------------
-
-    //<edge panel>---------------------------------
-    QLineEdit *edgeNameText;
-
-    QLineEdit *edgeRtext;
-    QLineEdit *edgeGtext;
-    QLineEdit *edgeBtext;
-
-    QLineEdit *edgeDistText;
-    QLineEdit *edgeDistMaxText;
-    QLineEdit *edgeDistMinText;
-    QLineEdit *edgeDistWeightText;
-
-    QLineEdit *edgeRGBdiffText;
-    QLineEdit *edgeRGBdiffMaxText;
-    QLineEdit *edgeRGBdiffMinText;
-    QLineEdit *edgeRGBdiffWeightText;
-
-    QLineEdit *edgeXdiffText;
-    QLineEdit *edgeXmaxText;
-    QLineEdit *edgeXminText;
-    QLineEdit *edgeXweightText;
-
-    QLineEdit *edgeYdiffText;
-    QLineEdit *edgeYmaxText;
-    QLineEdit *edgeYminText;
-    QLineEdit *edgeYweightText;
-
-    QLineEdit *edgeZdiffText;
-    QLineEdit *edgeZmaxText;
-    QLineEdit *edgeZminText;
-    QLineEdit *edgeZweightText;
-    //</edge panel>--------------------------------
-
     QLineEdit *moveFromCameraDist;
     QCheckBox *moveFromCameraInverse;
-
-    QLineEdit *pointCloudRadius;
-    QLineEdit *pointCloudNum;
-    QLineEdit *pointCloudPointSize;
-    QCheckBox *pointCloudRandomRGB;
 
     QLabel *statusText;
 
@@ -122,11 +73,6 @@ public:
         srand( time( 0 ) );
 
         toolStatus = ToolNothing;
-        rText = 0;
-        gText = 0;
-        bText = 0;
-        sphereNum = 0;
-        lineNum = 0;
         rightMouseButtonDown = false;
         leftMouseButtonDown = false;
 
@@ -172,7 +118,6 @@ public:
 
         gizmo = gizmoMove;
         gizmo->SetLocation( IGizmo::LOCATE_WORLD );
-
         gizmo->SetScreenDimension( 640, 480 );
         gizmoMove->SetDisplayScale( 2.f );
         gizmoRotate->SetDisplayScale( 2.f );
@@ -183,128 +128,10 @@ public:
         m_timer->setInterval(0);
         QObject::connect(m_timer, SIGNAL(timeout()), this, SLOT(loop()));
         m_timer->start();
-
-        pc = new PointCloud(smgr, "/home/q/Загрузки/vienna_parliament_relief.ply");
-        pc->setScale(100.);
     }
 
     irr::IrrlichtDevice *getIrrlichtDevice() const{
         return m_device;
-    }
-
-    void toTextAllParameters(Object *objectIn){
-        clearAllText();
-
-        if(objectIn != 0){
-            if(objectIn->getType() == ObjectSphere){
-                Sphere *sph = (Sphere*)objectIn;
-                SColor color = sph->getColor();
-                vector3df pos = sph->getPosition();
-
-                xText->setText(QString::number(pos.X));
-                yText->setText(QString::number(pos.Y));
-                zText->setText(QString::number(pos.Z));
-
-                rText->setText(QString::number(color.getRed()));
-                gText->setText(QString::number(color.getGreen()));
-                bText->setText(QString::number(color.getBlue()));
-                nodeRGBWeightText->setText(QString::number(sph->rgbWeight));
-
-                nameText->setText(sph->getName());
-                radiusText->setText(QString::number(sph->getScale()));
-            }else if(objectIn->getType() == ObjectLine){
-                Line *line = (Line*)objectIn;
-                SColor color = line->getColor();
-                Sphere *from = (Sphere*)line->from;
-                Sphere *to = (Sphere*)line->to;
-                vector3df fromPos = from->getPosition();
-                vector3df toPos = to->getPosition();
-                float dist = fromPos.getDistanceFrom(toPos);
-                float colorDiff = from->getColor().color - to->getColor().color;
-                float xDiff = toPos.X - fromPos.X;
-                float yDiff = toPos.Y - fromPos.Y;
-                float zDiff = toPos.Z - fromPos.Z;
-
-                edgeNameText->setText(line->getName());
-
-                edgeRtext->setText(QString::number(color.getRed()));
-                edgeGtext->setText(QString::number(color.getGreen()));
-                edgeBtext->setText(QString::number(color.getBlue()));
-
-                edgeDistText->setText(QString::number(dist));
-                edgeRGBdiffText->setText(QString::number(colorDiff));
-                edgeXdiffText->setText(QString::number(xDiff));
-                edgeYdiffText->setText(QString::number(yDiff));
-                edgeZdiffText->setText(QString::number(zDiff));
-
-                edgeDistMaxText->setText(QString::number(line->distMax));
-                edgeDistMinText->setText(QString::number(line->distMin));
-                edgeDistWeightText->setText(QString::number(line->distWeight));
-
-                edgeRGBdiffMaxText->setText(QString::number(line->rgbDiffMax));
-                edgeRGBdiffMinText->setText(QString::number(line->rgbDiffMin));
-                edgeRGBdiffWeightText->setText(QString::number(line->rgbDiffWeight));
-
-                edgeXmaxText->setText(QString::number(line->xDiffMax));
-                edgeXminText->setText(QString::number(line->xDiffMin));
-                edgeXweightText->setText(QString::number(line->xDiffWeight));
-
-                edgeYmaxText->setText(QString::number(line->yDiffMax));
-                edgeYminText->setText(QString::number(line->yDiffMin));
-                edgeYweightText->setText(QString::number(line->yDiffWeight));
-
-                edgeZmaxText->setText(QString::number(line->zDiffMax));
-                edgeZminText->setText(QString::number(line->zDiffMin));
-                edgeZweightText->setText(QString::number(line->zDiffWeight));
-            }
-        }
-    }
-
-    void clearAllText(){
-        xText->setText("");
-        yText->setText("");
-        zText->setText("");
-
-        rText->setText("");
-        gText->setText("");
-        bText->setText("");
-        nodeRGBWeightText->setText("");
-
-        nameText->setText("");
-        radiusText->setText("");
-
-        //<edge panel>---------------------------------
-        edgeNameText->setText("");
-
-        edgeRtext->setText("");
-        edgeGtext->setText("");
-        edgeBtext->setText("");
-
-        edgeDistText->setText("");
-        edgeDistMaxText->setText("");
-        edgeDistMinText->setText("");
-        edgeDistWeightText->setText("");
-
-        edgeRGBdiffText->setText("");
-        edgeRGBdiffMaxText->setText("");
-        edgeRGBdiffMinText->setText("");
-        edgeRGBdiffWeightText->setText("");
-
-        edgeXdiffText->setText("");
-        edgeXmaxText->setText("");
-        edgeXminText->setText("");
-        edgeXweightText->setText("");
-
-        edgeYdiffText->setText("");
-        edgeYmaxText->setText("");
-        edgeYminText->setText("");
-        edgeYweightText->setText("");
-
-        edgeZdiffText->setText("");
-        edgeZmaxText->setText("");
-        edgeZminText->setText("");
-        edgeZweightText->setText("");
-        //</edge panel>--------------------------------
     }
 
     void renderAxisesAndGrid(){
@@ -346,24 +173,11 @@ public:
 
     void selectObject(Object *objectIn){
         selectedObj = objectIn;
-
-        if(selectedObj != 0){
-            if(selectedObj->getType() == ObjectSphere){
-                emit setEdgePanelVisible(false);
-                emit setNodePanelVisible(true);
-            }else if(selectedObj->getType() == ObjectLine){
-                emit setNodePanelVisible(false);
-                emit setEdgePanelVisible(true);
-            }
-
-            toTextAllParameters(selectedObj);
-        }
     }
 
     void unselect(){
         if(selectedObj != 0){
             selectedObj = 0;
-            clearAllText();
         }
     }
 
@@ -384,28 +198,6 @@ public:
 
         objectIn->setPosition(pos);
     }
-
-    bool isSphere(Object *objectIn){
-        if(objectIn != 0){
-            if(objectIn->getType() == ObjectSphere){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool isLIne(Object *objectIn){
-        if(objectIn != 0){
-            if(objectIn->getType() == ObjectLine){
-                return true;
-            }
-        }
-        return false;
-    }
-
-signals:
-    void setNodePanelVisible(bool visible);
-    void setEdgePanelVisible(bool visible);
 
 public slots:
     void loop(){
@@ -441,23 +233,7 @@ public slots:
             //                toTextAllParameters(selectedObj);
             //            }
 
-            if(toolStatus == ToolSphere){
-                moveSphereAroundCamera(sphere);
-            }
-
-
-
-            if(toolStatus == ToolLineTo){
-                line3d<f32> ray = collMan->getRayFromScreenCoordinates(mousePos, smgr->getActiveCamera());
-                vector3df pos = camPos + ray.getVector().normalize()*5;
-
-                SMaterial material;
-                material.EmissiveColor = SColor(255, 255, 255, 255);
-                driver->setMaterial(material);
-                driver->draw3DLine(lineFrom->getPosition(), pos);
-            }
-
-            if(toolStatus == ToolMoveFromCamera && !isLIne(selectedObj)){
+            if(toolStatus == ToolMoveFromCamera){
                 if(rightMouseButtonDown){
                     TransformableObject *obj = (TransformableObject*)selectedObj;
                     moveSphereAroundCamera(obj, 0);
@@ -482,67 +258,17 @@ public slots:
 
             hitedObj = core->getObjectUnderCursor(mousePos);
 
-            //pc->render();
             core->renderAll();
             smgr->drawAll();
 
             gizmo->SetCameraMatrix( cam->getViewMatrix().pointer(), cam->getProjectionMatrix().pointer() );
 
-            //            gizmo->setObject(0);
-            if(toolStatus == ToolMove && !isLIne(selectedObj) && selectedObj != 0){
-                //gizmo->setObject((TransformableObject*)selectedObj);
+            if(toolStatus == ToolMove && selectedObj != 0){
                 gizmo->SetEditMatrix( ((TransformableObject*)selectedObj)->getMatrix()->pointer() );
                 gizmo->Draw();
             }
 
             driver->endScene();
-        }
-    }
-
-    void createSphere(){
-        sphereRadius = 5;
-        if(checkFloat(radiusText->text())){
-            sphereRadius = radiusText->text().toFloat();
-        }
-
-        toolStatus = ToolSphere;
-
-        QString name = "sphere"+QString::number(sphereNum);
-
-        sphere = core->addSphere(sphereRadius);
-        sphere->setColor(SColor(255, rText->text().toInt(), gText->text().toInt(), bText->text().toInt()));
-        sphere->setName(name);
-
-        sphereNum++;
-    }
-
-    void createEdge(){
-        toolStatus = ToolLineFrom;
-        selectedObj = 0;
-    }
-
-    void createPointCloud(){
-        if(checkInteger(pointCloudNum->text()) && checkFloat(pointCloudRadius->text())){
-            float radius = pointCloudRadius->text().toFloat();
-            int num = pointCloudNum->text().toInt();
-
-            float size = 1.;
-            if(checkFloat(pointCloudPointSize->text())){
-                size = pointCloudPointSize->text().toFloat();
-            }
-
-            pointCloud = core->addPointCloud();
-            pointCloud->setPointSize(size);
-
-            //            if(pointCloudRandomRGB->isChecked()){
-            //                for(int i=0; i<num; i++){
-            //                    pointCloud->addPoint(radius);
-            //                }
-            //            }
-
-            for(int i=0; i<num; i++){
-                pointCloud->addPoint(radius);
-            }
         }
     }
 
@@ -565,80 +291,6 @@ public slots:
         vector3df pos = camPos + (sph->getPosition() - camPos).normalize()*dist;
 
         sph->setPosition(pos);
-    }
-
-    void applyX(){
-        QString text = xText->text();
-        if(checkFloat(text) && selectedObj != 0){
-            if(selectedObj->getType() == ObjectSphere){
-                Sphere *sph = (Sphere*)selectedObj;
-                vector3df pos = sph->getPosition();
-                pos.X = text.toFloat();
-                sph->setPosition(pos);
-            }
-        }
-    }
-
-    void applyY(){
-        QString text = yText->text();
-        if(checkFloat(text) && selectedObj != 0){
-            if(selectedObj->getType() == ObjectSphere){
-                Sphere *sph = (Sphere*)selectedObj;
-                vector3df pos = sph->getPosition();
-                pos.Y = text.toFloat();
-                sph->setPosition(pos);
-            }
-        }
-    }
-
-    void applyZ(){
-        QString text = zText->text();
-        if(checkFloat(text) && selectedObj != 0){
-            if(selectedObj->getType() == ObjectSphere){
-                Sphere *sph = (Sphere*)selectedObj;
-                vector3df pos = sph->getPosition();
-                pos.Z = text.toFloat();
-                sph->setPosition(pos);
-            }
-        }
-    }
-
-    void applyR(){
-        QString text = rText->text();
-        if(checkInteger(text) && selectedObj != 0){
-            selectedObj->color.setRed(text.toInt());
-        }
-    }
-
-    void applyG(){
-        QString text = gText->text();
-        if(checkInteger(text) && selectedObj != 0){
-            selectedObj->color.setGreen(text.toInt());
-        }
-    }
-
-    void applyB(){
-        QString text = bText->text();
-        if(checkInteger(text) && selectedObj != 0){
-            selectedObj->color.setBlue(text.toInt());
-        }
-    }
-
-    void applyName(){
-        if(selectedObj != 0){
-            selectedObj->setName(nameText->text().toStdString().c_str());
-        }
-    }
-
-    void applyRadius(){
-        QString text = radiusText->text();
-        if(checkFloat(text) && selectedObj != 0){
-            if(selectedObj->getType() == ObjectSphere){
-                Sphere *sph = (Sphere*)selectedObj;
-                float r = radiusText->text().toFloat();
-                sph->setScale(r);
-            }
-        }
     }
 
     void saveData(){
@@ -755,10 +407,6 @@ protected:
 
             leftMouseButtonDown = true;
             leftButtonInitmousePos = m_device->getCursorControl()->getPosition();
-            if(isSphere(selectedObj)){
-                Sphere *sph = (Sphere*)selectedObj;
-                initPos = sph->getPosition();
-            }
             irrEvent.MouseInput.Event = irr::EMIE_LMOUSE_PRESSED_DOWN;
             break;
 
@@ -810,32 +458,6 @@ protected:
 
                 selectObject(hitedObj);
             }
-
-            if(toolStatus == ToolSphere){
-                toolStatus = ToolNothing;
-                selectObject(sphere);
-            }else if(toolStatus == ToolLineFrom && hitedObj != 0){
-                if(hitedObj->getType() == ObjectSphere){
-                    toolStatus = ToolLineTo;
-                    lineFrom = (Sphere*)hitedObj;
-                }
-            }else if(toolStatus == ToolLineTo){
-                if(hitedObj != 0){
-                    if(hitedObj->getType() == ObjectSphere){
-                        QString name = "edge"+QString::number(lineNum);
-                        lineNum++;
-
-                        selectedObj = core->addLine(lineFrom, (Sphere*)hitedObj);
-                        selectedObj->setColor(SColor(255, rText->text().toInt(), gText->text().toInt(), bText->text().toInt()));
-                        selectedObj->setName(name);
-
-                        selectObject(selectedObj);
-                        toolStatus = ToolNothing;
-                    }
-                }
-            }
-
-            //gizmo->mouseLeftButtonReleaseEvent();
 
             break;
 
@@ -923,24 +545,12 @@ private:
     vector2d<s32> leftButtonInitmousePos;
     vector3df initPos;
 
-    Sphere *sphere;
-    float sphereRadius;
-    int sphereNum;
-
-    PointCloud *pointCloud;
-
-    Line *line;
-    Sphere *lineFrom;
-    int lineNum;
-
     Object *selectedObj;
     Object *hitedObj;
 
     irr::IrrlichtDevice *m_device;
     ISceneManager *smgr;
     QTimer *m_timer;
-
-    PointCloud *pc;
 
     IGizmo *gizmo;
     IGizmo *gizmoMove, *gizmoRotate, *gizmoScale;

@@ -27,7 +27,6 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h \
     irrlichtwidget.h \
     myeventreceiver.h \
-    gizmo.h \
     irrlichtwrap.h \
     tinyply.h \
     object.h \
@@ -43,7 +42,9 @@ HEADERS  += mainwindow.h \
     ZBaseDefs.h \
     ZBaseMaths.h \
     ZCollisionsUtils.h \
-    ZMathsFunc.h
+    ZMathsFunc.h \
+    irrlichtwidget.h.autosave \
+    attributetreedelegate.h
 
 FORMS    += mainwindow.ui
 
@@ -62,5 +63,15 @@ DISTFILES += \
     frag.glsl \
     vert.vsh \
     qtIrrlicht4.pro.user \
-    README.md
+    README.md \
+    closed_hover.png \
+    closed.png \
+    cursor.png \
+    open_hover.png \
+    open.png \
+    select.png \
+    select2.png \
+    transform_move.png \
+    transform_rotate.png \
+    transform_scale.png
 
